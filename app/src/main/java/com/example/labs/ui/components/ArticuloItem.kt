@@ -1,7 +1,7 @@
 package com.example.labs.ui.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*   // incluye Row, Column, Box, Spacer, fillMaxSize, padding, etc.
+import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier

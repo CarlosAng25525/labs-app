@@ -1,9 +1,12 @@
 package com.example.labs.ui.screens
 
+import android.util.Log
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*   // incluye Row, Column, Box, Spacer, fillMaxSize, padding, etc.
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -12,46 +15,75 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.example.labs.data.articulos
 import com.example.labs.ui.components.ArticuloItem
 
-/*
-Q1: Al quitar el weight de la columna, el texto ya no ocupa todo el espacio y la miniatura empuja el contenido, dejando la pantalla desbalanceada. El weight permite que el texto se expanda correctamente.
-
-Q2: El componente recibe un Modifier por parámetro para que el margen externo lo decida la pantalla que lo usa. Así el mismo componente puede reutilizarse en diferentes pantallas con espaciados distintos.
-*/
-
 @Composable
 fun FeedScreen(modifier: Modifier = Modifier) {
+    var contadorAplausos by rememberSaveable { mutableStateOf(0) }
+    var busqueda by rememberSaveable { mutableStateOf("") }
+    var soloLecturasCortas by rememberSaveable { mutableStateOf(false) }
+    var pestañaSeleccionada by rememberSaveable { mutableStateOf("ParaTi") }
+
+    val articulosFiltrados = articulos.filter { articulo ->
+        val coincideBusqueda = articulo.titulo.contains(busqueda, ignoreCase = true) ||
+                articulo.autor.contains(busqueda, ignoreCase = true)
+        val coincideLecturaCorta = !soloLecturasCortas || articulo.minutos <= 5
+        val coincidePestaña = when (pestañaSeleccionada) {
+            "Siguiendo" -> articulo.esAutorSeguido
+            "Destacados" -> articulo.esDestacado
+            else -> true
+        }
+        coincideBusqueda && coincideLecturaCorta && coincidePestaña
+    }
+
     Column(modifier = modifier.fillMaxSize().padding(16.dp)) {
-        // Barra superior
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text("M", fontWeight = FontWeight.Bold)
             Text("Lecturas")
         }
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Pestañas
         Row {
-            Text("Para ti", fontWeight = FontWeight.Bold, color = Color.Black)
-            Spacer(modifier = Modifier.width(16.dp))
-            Text("Siguiendo")
-            Spacer(modifier = Modifier.width(16.dp))
-            Text("Destacados")
+            listOf("ParaTi", "Siguiendo", "Destacados").forEach { pestaña ->
+                Text(
+                    text = pestaña,
+                    fontWeight = if (pestañaSeleccionada == pestaña) FontWeight.Bold else FontWeight.Normal,
+                    modifier = Modifier.clickable { pestañaSeleccionada = pestaña }
+                )
+                Spacer(modifier = Modifier.width(16.dp))
+            }
         }
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Lista de artículos
-        articulos.forEach {
-            ArticuloItem(it)
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(1.dp)
-                    .background(Color.LightGray)
-            )
+        OutlinedTextField(
+            value = busqueda,
+            onValueChange = { busqueda = it },
+            label = { Text("Buscar por título o autor") },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+            Switch(checked = soloLecturasCortas, onCheckedChange = { soloLecturasCortas = it })
+            Text("Solo lecturas cortas")
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        TextButton(onClick = { contadorAplausos++ }) {
+            Text("Aplaudir · $contadorAplausos")
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        if (articulosFiltrados.isEmpty()) {
+            Text("No se encontraron artículos. Cambia la pestaña, la búsqueda o el filtro.")
+        } else {
+            articulosFiltrados.forEach {
+                ArticuloItem(it)
+                Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color.LightGray))
+            }
         }
     }
 }
