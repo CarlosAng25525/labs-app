@@ -8,14 +8,18 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.layout.padding
 import com.example.labs.ui.screens.FeedScreen
+import com.example.labs.ui.theme.MyApplicationTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Log.d("LAB6_12345", "onCreate")
         setContent {
-            Scaffold { innerPadding ->
-                FeedScreen(modifier = Modifier.padding(innerPadding))
+            Log.d("LAB6_12345", "setContent starting")
+            MyApplicationTheme {
+                Scaffold { innerPadding ->
+                    FeedScreen(modifier = Modifier.padding(innerPadding))
+                }
             }
         }
     }

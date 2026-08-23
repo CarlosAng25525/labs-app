@@ -1,29 +1,39 @@
-# Fix Compose Compiler and Kotlin Version Mismatch
+# Implementation Plan - Fix Configuration Cache Compatibility for Gradle 9.5.0
 
-The user is experiencing a build error due to a mismatch between the Compose Compiler version (1.5.3) and the Kotlin version (1.9.23). The Compose Compiler version 1.5.3 is only compatible with Kotlin 1.9.10. For Kotlin 1.9.23, the compatible Compose Compiler version is 1.5.11.
+The build is failing with a Configuration Cache error due to the `org.jetbrains.kotlin.android` plugin using an unsupported API (`BuildEventsListenerRegistry`) in Gradle 9.5.0. To fix this, we need to upgrade the Kotlin and Android Gradle Plugins to versions that are compatible with Gradle 9.x and its stricter Configuration Cache requirements.
 
 ## User Review Required
 
 > [!IMPORTANT]
-> The project currently uses a mix of legacy `buildscript` declarations and a `libs.versions.toml` file with futuristic versions (e.g., Kotlin 2.2.10, AGP 9.3.1). I will focus on fixing the immediate build error by aligning the versions to the Kotlin version currently being used (1.9.23).
+> This plan involves upgrading Kotlin to `2.4.10` and AGP to `9.3.1`. Since Kotlin 2.0+ includes the Compose compiler, I will also switch to the `org.jetbrains.kotlin.plugin.compose` plugin and remove the legacy `kotlinCompilerExtensionVersion` configuration.
 
 ## Proposed Changes
 
 ### Build Configuration
 
-#### [MODIFY] [app/build.gradle.kts](file:///C:/Users/USUARIO/AndroidStudioProjects/MyApplication/app/build.gradle.kts)
-- Ensure `kotlinCompilerExtensionVersion` is explicitly set to `"1.5.11"` to match Kotlin `1.9.23`.
-- Verify that the `composeOptions` block is correctly placed.
+#### [MODIFY] [libs.versions.toml](file:///C:/Users/USUARIO/AndroidStudioProjects/MyApplication/gradle/libs.versions.toml)
+- Update `kotlin` to `2.4.10`.
+- Update `agp` to `9.3.1`.
+- Add `kotlin-android` plugin definition to the `[plugins]` section.
 
-#### [MODIFY] [libs.versions.toml](file:///C:/Users/USUARIO/AndroidStudioProjects/MyApplication/gradle/libs.versions.toml) (Optional but recommended)
-- Update the Kotlin version to `1.9.23` to match the actual usage if the user wants to keep using the catalog.
-- Add a version for the Compose Compiler in the catalog for better management.
+#### [MODIFY] [build.gradle.kts (root)](file:///C:/Users/USUARIO/AndroidStudioProjects/MyApplication/build.gradle.kts)
+- Replace the legacy `buildscript` block with a modern `plugins` block using `alias(libs.plugins.android.application) apply false` and `alias(libs.plugins.kotlin.android) apply false`.
+- Include the `kotlin-compose` plugin.
+
+#### [MODIFY] [app/build.gradle.kts](file:///C:/Users/USUARIO/AndroidStudioProjects/MyApplication/app/build.gradle.kts)
+- Update the `plugins` block to use `alias` references.
+- Remove the `composeOptions` block (specifically `kotlinCompilerExtensionVersion`) as it's no longer needed with Kotlin 2.0+.
+- Ensure `jvmTarget` and `sourceCompatibility` are set to `JavaVersion.VERSION_17` or higher (Gradle 9 usually requires Java 17+).
+
+### Gradle Settings
+
+#### [MODIFY] [gradle.properties](file:///C:/Users/USUARIO/AndroidStudioProjects/MyApplication/gradle.properties)
+- (Optional) Keep `org.gradle.configuration-cache=true` to verify the fix.
 
 ## Verification Plan
 
 ### Automated Tests
-- Run `./gradlew :app:assembleDebug` to verify the build succeeds.
-- Run `./gradlew :app:compileDebugKotlin` to specifically check the Kotlin compilation.
+- Run `./gradlew clean :app:assembleDebug --configuration-cache` to verify that the configuration cache is stored successfully and the build completes.
 
 ### Manual Verification
-- Verify that the IDE no longer shows version mismatch warnings.
+- Verify in Android Studio that the project syncs without errors.
