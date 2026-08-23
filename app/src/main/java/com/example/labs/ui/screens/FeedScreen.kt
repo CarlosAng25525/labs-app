@@ -16,9 +16,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import com.example.labs.data.articulos
 import com.example.labs.ui.components.ArticuloItem
+import com.example.labs.model.Articulo
 
 @Composable
 fun FeedScreen(modifier: Modifier = Modifier) {
+    // Estado vive aquí
     var contadorAplausos by rememberSaveable { mutableStateOf(0) }
     var busqueda by rememberSaveable { mutableStateOf("") }
     var soloLecturasCortas by rememberSaveable { mutableStateOf(false) }
@@ -36,6 +38,34 @@ fun FeedScreen(modifier: Modifier = Modifier) {
         coincideBusqueda && coincideLecturaCorta && coincidePestaña
     }
 
+    // Llamada al contenido con valores y callbacks
+    FeedContent(
+        visibleArticles = articulosFiltrados,
+        searchQuery = busqueda,
+        onSearchQueryChange = { busqueda = it },
+        showShortReadsOnly = soloLecturasCortas,
+        onShortReadsOnlyChange = { soloLecturasCortas = it },
+        selectedTab = pestañaSeleccionada,
+        onTabSelected = { pestañaSeleccionada = it },
+        applauseCount = contadorAplausos,
+        onApplaud = { contadorAplausos++ },
+        modifier = modifier
+    )
+}
+
+@Composable
+fun FeedContent(
+    visibleArticles: List<Articulo>,
+    searchQuery: String,
+    onSearchQueryChange: (String) -> Unit,
+    showShortReadsOnly: Boolean,
+    onShortReadsOnlyChange: (Boolean) -> Unit,
+    selectedTab: String,
+    onTabSelected: (String) -> Unit,
+    applauseCount: Int,
+    onApplaud: () -> Unit,
+    modifier: Modifier = Modifier
+) {
     Surface(
         modifier = modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
@@ -52,8 +82,8 @@ fun FeedScreen(modifier: Modifier = Modifier) {
                 listOf("ParaTi", "Siguiendo", "Destacados").forEach { pestaña ->
                     Text(
                         text = pestaña,
-                        fontWeight = if (pestañaSeleccionada == pestaña) FontWeight.Bold else FontWeight.Normal,
-                        modifier = Modifier.clickable { pestañaSeleccionada = pestaña }
+                        fontWeight = if (selectedTab == pestaña) FontWeight.Bold else FontWeight.Normal,
+                        modifier = Modifier.clickable { onTabSelected(pestaña) }
                     )
                     Spacer(modifier = Modifier.width(16.dp))
                 }
@@ -62,8 +92,8 @@ fun FeedScreen(modifier: Modifier = Modifier) {
             Spacer(modifier = Modifier.height(8.dp))
 
             OutlinedTextField(
-                value = busqueda,
-                onValueChange = { busqueda = it },
+                value = searchQuery,
+                onValueChange = onSearchQueryChange,
                 label = { Text("Buscar por título o autor") },
                 modifier = Modifier.fillMaxWidth()
             )
@@ -71,23 +101,23 @@ fun FeedScreen(modifier: Modifier = Modifier) {
             Spacer(modifier = Modifier.height(8.dp))
 
             Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                Switch(checked = soloLecturasCortas, onCheckedChange = { soloLecturasCortas = it })
+                Switch(checked = showShortReadsOnly, onCheckedChange = onShortReadsOnlyChange)
                 Text("Solo lecturas cortas")
             }
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            TextButton(onClick = { contadorAplausos++ }) {
-                Text("Aplaudir · $contadorAplausos")
+            TextButton(onClick = onApplaud) {
+                Text("Aplaudir · $applauseCount")
             }
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            if (articulosFiltrados.isEmpty()) {
+            if (visibleArticles.isEmpty()) {
                 Text("No se encontraron artículos. Cambia la pestaña, la búsqueda o el filtro.")
             } else {
                 LazyColumn(modifier = Modifier.weight(1f)) {
-                    items(articulosFiltrados) { articulo ->
+                    items(visibleArticles) { articulo ->
                         ArticuloItem(articulo)
                         Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color.LightGray))
                     }
@@ -99,6 +129,32 @@ fun FeedScreen(modifier: Modifier = Modifier) {
 
 @Preview(showBackground = true)
 @Composable
-fun FeedScreenPreview() {
-    FeedScreen()
+fun FeedContentPreviewConResultados() {
+    FeedContent(
+        visibleArticles = articulos,
+        searchQuery = "app",
+        onSearchQueryChange = {},
+        showShortReadsOnly = false,
+        onShortReadsOnlyChange = {},
+        selectedTab = "ParaTi",
+        onTabSelected = {},
+        applauseCount = 3,
+        onApplaud = {}
+    )
+}
+
+@Preview(showBackground = true)
+@Composable
+fun FeedContentPreviewVacio() {
+    FeedContent(
+        visibleArticles = emptyList(),
+        searchQuery = "nada",
+        onSearchQueryChange = {},
+        showShortReadsOnly = true,
+        onShortReadsOnlyChange = {},
+        selectedTab = "Destacados",
+        onTabSelected = {},
+        applauseCount = 0,
+        onApplaud = {}
+    )
 }
