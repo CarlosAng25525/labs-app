@@ -1,0 +1,8 @@
+- [x] Fix Compose Compiler mismatch
+- [x] Align Dependencies and Fix Runtime Issues
+- [x] Fix Configuration Cache Compatibility (Gradle 9.5.0)
+    - [x] Update `libs.versions.toml` (Kotlin 2.4.10, AGP 9.3.1)
+    - [x] Modernize root `build.gradle.kts` (Replace buildscript with plugins)
+    - [x] Update `app/build.gradle.kts` (Use aliases, remove redundant plugins)
+    - [x] Handle AGP 9.0+ built-in Kotlin support (Remove `kotlinOptions`)
+    - [x] Verification with `./gradlew clean :app:assembleDebug --configuration-cache`

@@ -5,5 +5,7 @@ data class Articulo(
     val titulo: String,
     val extracto: String,
     val minutos: Int,
-    val fecha: String
+    val fecha: String,
+    val esAutorSeguido: Boolean,
+    val esDestacado: Boolean
 )
